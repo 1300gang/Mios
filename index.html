@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+  <style>
+    /* Overlay de navigation par-dessus la scène */
+    #nav-ui {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      display: flex;
+      gap: 12px;
+    }
+    .nav-btn {
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 24px;
+      padding: 10px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s;
+    }
+    .nav-btn:hover  { background: rgba(0,0,0,0.85); }
+    .nav-btn.active { background: rgba(255,255,255,0.25); }
+    #scene-title {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      color: #fff;
+      font-size: 18px;
+      font-family: sans-serif;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Titre de la scène actuelle -->
+  <div id="scene-title">Architecture de Mios en France</div>
+
+  <!-- Boutons de navigation -->
+  <div id="nav-ui">
+    <button class="nav-btn active" onclick="setScene(0)">Peinture</button>
+    <button class="nav-btn" onclick="setScene(1)"> Ancien Mios</button>
+    <button class="nav-btn" onclick="setScene(2)"> Sancy</button>
+  </div>
+
+  <a-scene>
+    <a-sky id="sky"
+            src="Gemini_Generated_Image_y942zwy942zwy942.png"
+            rotation="0 -130 0"></a-sky>
+
+    <a-text id="scene-text"
+             font="kelsonsans"
+             value="Architecture de Mios"
+             width="6"
+             position="-2.5 0.25 -1.5"
+             rotation="0 15 0"></a-text>
+  </a-scene>
+
+  <script>
+    // ✏️ Ajoute tes scènes ici
+    const SCENES = [
+      {
+        src:      "Gemini_Generated_Image_vt64o9vt64o9vt64.png",
+        rotation: "0 -130 0",
+        title:    "Architecture de Mios en France",
+        label:    "Architecture de Mios"
+      },
+      {
+        src:      "reimage.png",   // ← ton 2e fichier
+        rotation: "0 0 0",
+        title:    "Le Jardin",
+        label:    "Le Jardin"
+      },
+      {
+        src:      "image.png",  // ← ton 3e fichier
+        rotation: "0 45 0",
+        title:    "Bords de Gironde",
+        label:    "Bords de Gironde"
+      }
+    ];
+
+    function setScene(index) {
+      const scene = SCENES[index];
+      const sky   = document.getElementById("sky");
+      const text  = document.getElementById("scene-text");
+      const title = document.getElementById("scene-title");
+
+      sky.setAttribute("src",      scene.src);
+      sky.setAttribute("rotation", scene.rotation);
+      text.setAttribute("value",   scene.label);
+      title.textContent = scene.title;
+
+      // Met à jour le bouton actif
+      document.querySelectorAll(".nav-btn")
+        .forEach((btn, i) => btn.classList.toggle("active", i === index));
+    }
+  </script>
+
+</body>
+</html>
