@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Masque de Fayçal — Couche Bleue</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+
+  <style>
+    /* jeu bleu */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --noir:      #0a0804;
+      --or:        #c9a84c;
+      --or-pale:   #e8d49a;
+      --bleu:      #1a3a5c;
+      --bleu-vif:  #2980b9;
+      --bleu-ciel: #7fb3d3;
+      --creme:     #f5f0e8;
+      --erreur:    #c0392b;
+      --succes:    #27ae60;
+    }
+
+    html, body {
+      width: 100%; height: 100dvh;
+      overflow: hidden;
+      background: #000;
+      font-family: 'Crimson Pro', serif;
+      color: var(--creme);
+    }
+
+    /* ── CAMÉRA ──────────────────────────────── */
+    #camera-layer {
+      position: fixed; inset: 0; z-index: 0;
+    }
+    #video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    /* ── OVERLAY IMAGE ───────────────────────── */
+    #overlay-layer {
+      position: fixed; inset: 0; z-index: 1;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #overlay-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0.82;
+      transition: opacity 0.35s ease;
+    }
+    #overlay-layer.hidden { opacity: 0; }
+
+    /* ── RÉTICULE ────────────────────────────── */
+    #reticle {
+      position: fixed; inset: 0; z-index: 2;
+      pointer-events: none;
+    }
+    #reticle svg { width: 100%; height: 100%; }
+
+    /* ── UI ──────────────────────────────────── */
+    #ui-layer {
+      position: fixed; inset: 0; z-index: 10;
+      display: flex; flex-direction: column;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    /* ── HEADER ──────────────────────────────── */
+    #header {
+      padding: 14px 16px 0;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      pointer-events: all;
+    }
+
+    #btn-back {
+      font-family: 'Cinzel', serif;
+      font-size: 10px; letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.7);
+      text-decoration: none;
+      border: 1px solid rgba(201,168,76,0.25);
+      padding: 7px 12px; border-radius: 2px;
+      background: rgba(10,8,4,0.6);
+      backdrop-filter: blur(6px);
+      -webkit-tap-highlight-color: transparent;
+    }
+    #btn-back:active { color: var(--or); border-color: var(--or); }
+
+    .header-pill {
+      font-family: 'Cinzel', serif;
+      font-size: 9px; letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(127,179,211,0.85);
+      background: rgba(10,8,4,0.6);
+      backdrop-filter: blur(6px);
+      padding: 6px 12px; border-radius: 2px;
+      border: 1px solid rgba(127,179,211,0.25);
+    }
+
+    /* ── INDICATEUR PROGRESSION ──────────────── */
+    #progress-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .progress-label {
+      font-family: 'Cinzel', serif;
+      font-size: 9px; letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.5);
+      background: rgba(10,8,4,0.55);
+      backdrop-filter: blur(6px);
+      padding: 4px 10px; border-radius: 2px;
+    }
+
+    #progress-dots {
+      display: flex; gap: 8px;
+      background: rgba(10,8,4,0.65);
+      backdrop-filter: blur(8px);
+      padding: 10px 18px; border-radius: 20px;
+      border: 1px solid rgba(201,168,76,0.15);
+    }
+
+    .dot {
+      width: 11px; height: 11px; border-radius: 50%;
+      background: rgba(245,240,232,0.12);
+      border: 1px solid rgba(201,168,76,0.2);
+      transition: background 0.4s ease, border-color 0.4s ease, transform 0.3s ease;
+    }
+    .dot.found {
+      background: var(--bleu-vif);
+      border-color: var(--bleu-ciel);
+      transform: scale(1.25);
+      box-shadow: 0 0 8px rgba(41,128,185,0.6);
+    }
+
+    /* ── PANNEAU BAS ─────────────────────────── */
+    #bottom-panel {
+      padding: 0 14px 14px;
+      display: flex; flex-direction: column;
+      gap: 10px;
+      pointer-events: all;
+    }
+
+    /* ── CAROUSEL FILTRES ────────────────────── */
+    #filter-carousel-wrap {
+      display: flex; flex-direction: column;
+      gap: 6px;
+    }
+
+    .carousel-label {
+      font-family: 'Cinzel', serif;
+      font-size: 8px; letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.4);
+      text-align: center;
+    }
+
+    #filter-carousel {
+      display: flex; gap: 8px;
+      overflow-x: auto; overflow-y: hidden;
+      padding: 4px 2px 8px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    #filter-carousel::-webkit-scrollbar { display: none; }
+
+    .filter-btn {
+      flex-shrink: 0;
+      scroll-snap-align: center;
+      width: 54px; height: 54px;
+      border-radius: 6px;
+      border: 2px solid rgba(201,168,76,0.18);
+      overflow: hidden;
+      background: rgba(10,8,4,0.7);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      transition: border-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .filter-btn img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+
+    .filter-btn.active {
+      border-color: var(--bleu-vif);
+      transform: scale(1.08);
+      box-shadow: 0 0 12px rgba(41,128,185,0.5);
+    }
+    .filter-btn.active img { opacity: 1; }
+
+    /* Badge "trouvé" sur le thumbnail */
+    .filter-btn .found-badge {
+      display: none;
+      position: absolute; inset: 0;
+      background: rgba(41,128,185,0.45);
+      align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .filter-btn.word-found .found-badge { display: flex; }
+    .filter-btn.word-found {
+      border-color: var(--bleu-vif);
+      opacity: 0.65;
+    }
+
+    /* ── INPUT MOT ───────────────────────────── */
+    .input-row {
+      display: flex; gap: 8px;
+    }
+
+    #word-input {
+      flex: 1; padding: 14px;
+      background: rgba(10,8,4,0.82);
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 2px;
+      color: var(--creme);
+      font-family: 'Cinzel', serif;
+      font-size: 16px; letter-spacing: 0.2em;
+      text-transform: uppercase;
+      outline: none; -webkit-appearance: none;
+      transition: border-color 0.2s;
+    }
+    #word-input::placeholder {
+      color: rgba(245,240,232,0.2);
+      font-size: 11px; letter-spacing: 0.12em;
+    }
+    #word-input:focus { border-color: rgba(127,179,211,0.6); }
+    #word-input.error {
+      border-color: var(--erreur) !important;
+      animation: shake 0.35s ease;
+    }
+    #word-input.success-flash {
+      border-color: var(--bleu-vif) !important;
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
+
+    #btn-validate {
+      padding: 14px 18px;
+      background: var(--bleu);
+      border: 1px solid rgba(127,179,211,0.4);
+      border-radius: 2px;
+      color: var(--creme);
+      font-family: 'Cinzel', serif;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      cursor: pointer; white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #btn-validate:active { background: var(--bleu-vif); }
+
+    #feedback {
+      font-family: 'Cinzel', serif;
+      font-size: 10px; letter-spacing: 0.15em;
+      text-transform: uppercase; text-align: center;
+      min-height: 16px; opacity: 0;
+      transition: opacity 0.2s;
+    }
+    #feedback.show        { opacity: 1; }
+    #feedback.is-error    { color: var(--erreur); }
+    #feedback.is-success  { color: var(--bleu-vif); }
+
+    /* ── TOAST MOT TROUVÉ ────────────────────── */
+    #word-toast {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      z-index: 20;
+      background: rgba(10,8,4,0.9);
+      border: 1px solid var(--bleu-vif);
+      border-radius: 6px;
+      padding: 18px 28px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 6px;
+      pointer-events: none;
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                  opacity 0.25s ease;
+      opacity: 0;
+    }
+    #word-toast.show {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    .toast-word {
+      font-family: 'Cinzel', serif;
+      font-size: 28px; font-weight: 700;
+      color: var(--bleu-vif); line-height: 1;
+      letter-spacing: 0.2em;
+    }
+    .toast-sub {
+      font-family: 'Cinzel', serif;
+      font-size: 9px; letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.7);
+    }
+    .toast-count {
+      font-family: 'Cinzel', serif;
+      font-size: 11px; letter-spacing: 0.15em;
+      color: rgba(127,179,211,0.85);
+      margin-top: 2px;
+    }
+
+    /* ── ÉCRAN VICTOIRE ──────────────────────── */
+    #win-screen {
+      position: fixed; inset: 0; z-index: 50;
+      background: rgba(10,8,4,0.95);
+      backdrop-filter: blur(14px);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 18px; padding: 40px 32px;
+    }
+    #win-screen.show { display: flex; }
+
+    .win-orn { display: flex; align-items: center; gap: 10px; animation: fadeUp 0.5s ease 0.1s both; }
+    .win-line { width: 44px; height: 1px; background: linear-gradient(to right, transparent, var(--or)); }
+    .win-line.r { background: linear-gradient(to left, transparent, var(--or)); }
+    .win-diamond { width: 6px; height: 6px; background: var(--or); transform: rotate(45deg); }
+
+    .win-icon { font-size: 58px; animation: pop 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both; }
+    @keyframes pop {
+      from { transform: scale(0) rotate(-15deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+    }
+
+    .win-title {
+      font-family: 'Cinzel', serif; font-size: 22px; font-weight: 400;
+      color: var(--or-pale); letter-spacing: 0.12em; text-align: center;
+      animation: fadeUp 0.5s ease 0.35s both;
+    }
+    .win-words-found {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.5s ease 0.45s both;
+    }
+    .win-word-chip {
+      font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700;
+      color: var(--bleu-vif); letter-spacing: 0.2em;
+      background: rgba(41,128,185,0.12);
+      border: 1px solid rgba(41,128,185,0.35);
+      padding: 5px 12px; border-radius: 2px;
+    }
+    .win-sub {
+      font-size: 15px; font-style: italic; font-weight: 300;
+      color: rgba(245,240,232,0.6); text-align: center; line-height: 1.8;
+      animation: fadeUp 0.5s ease 0.55s both;
+    }
+    #btn-hub {
+      display: block; padding: 15px 40px;
+      background: var(--or); border: none; border-radius: 2px;
+      color: var(--noir); font-family: 'Cinzel', serif;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      cursor: pointer; text-decoration: none; text-align: center;
+      margin-top: 6px;
+      animation: fadeUp 0.5s ease 0.7s both;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .particle { position: absolute; animation: pfall linear forwards; }
+    @keyframes pfall {
+      0%   { transform: translateY(-10px) rotate(0deg);   opacity: 1; }
+      100% { transform: translateY(110vh) rotate(540deg); opacity: 0; }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── ERREUR CAMÉRA ───────────────────────── */
+    #cam-error {
+      position: fixed; inset: 0; z-index: 40;
+      background: var(--noir);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px; padding: 40px 32px; text-align: center;
+    }
+    #cam-error.show { display: flex; }
+    .cam-err-icon  { font-size: 52px; }
+    .cam-err-title { font-family: 'Cinzel', serif; font-size: 18px; color: var(--or-pale); }
+    .cam-err-text  { font-size: 14px; color: rgba(245,240,232,0.6); line-height: 1.7; max-width: 300px; }
+    .cam-err-btn   {
+      padding: 12px 32px; background: var(--bleu); border: none; border-radius: 2px;
+      color: var(--creme); font-family: 'Cinzel', serif; font-size: 12px;
+      letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
+    }
+    .cam-err-back  { font-size: 12px; color: rgba(201,168,76,0.5); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Couche 1 : caméra ── -->
+  <div id="camera-layer">
+    <video id="video" autoplay playsinline muted></video>
+  </div>
+
+  <!-- ── Couche 2 : overlay actif ── -->
+  <div id="overlay-layer">
+    <img id="overlay-img" src="" alt="overlay" onerror="usePlaceholderOverlay()">
+  </div>
+
+  <!-- ── Réticule ── -->
+  <div id="reticle">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="rgba(201,168,76,0.45)" stroke-width="0.35" fill="none">
+        <path d="M15 23 L15 18 L20 18"/>
+        <path d="M80 18 L85 18 L85 23"/>
+        <path d="M15 77 L15 82 L20 82"/>
+        <path d="M80 82 L85 82 L85 77"/>
+      </g>
+      <g stroke="rgba(201,168,76,0.18)" stroke-width="0.2" fill="none">
+        <line x1="48.5" y1="50" x2="51.5" y2="50"/>
+        <line x1="50"   y1="48.5" x2="50" y2="51.5"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ── Toast mot trouvé ── -->
+  <div id="word-toast">
+    <div class="toast-word" id="toast-word">MOT</div>
+    <div class="toast-sub">Mot déchiffré !</div>
+    <div class="toast-count" id="toast-count">1 / 5</div>
+  </div>
+
+  <!-- ── UI ── -->
+  <div id="ui-layer">
+
+    <div id="header">
+      <a href="hub.html" id="btn-back" onclick="stopCamera()">← Hub</a>
+      <span class="header-pill">Couche Bleue</span>
+    </div>
+
+    <!-- Progression -->
+    <div id="progress-bar-wrap">
+      <span class="progress-label">Mots déchiffrés</span>
+      <div id="progress-dots">
+        <!-- 5 points générés par JS -->
+      </div>
+    </div>
+
+    <div id="bottom-panel">
+
+      <!-- Carousel filtres -->
+      <div id="filter-carousel-wrap">
+        <span class="carousel-label">Filtres — glisse pour changer de calque</span>
+        <div id="filter-carousel">
+          <!-- Boutons générés par JS -->
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div>
+        <div class="input-row">
+          <input
+            id="word-input"
+            type="text"
+            placeholder="Mot secret…"
+            autocomplete="off" autocorrect="off"
+            autocapitalize="characters"
+            spellcheck="false" enterkeyhint="done"
+          >
+          <button id="btn-validate">OK</button>
+        </div>
+        <div id="feedback">·</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Écran victoire ── -->
+  <div id="win-screen">
+    <div class="particles" id="particles"></div>
+    <div class="win-orn">
+      <div class="win-line"></div><div class="win-diamond"></div><div class="win-line r"></div>
+    </div>
+    <div class="win-icon">🔵</div>
+    <div class="win-title">Cinq mots déchiffrés !</div>
+    <div class="win-words-found" id="win-words-found"></div>
+    <p class="win-sub">La couche bleue du masque<br>fond dans la lumière…</p>
+    <a href="hub.html?win=blue" id="btn-hub">← Retour au masque</a>
+  </div>
+
+  <!-- ── Erreur caméra ── -->
+  <div id="cam-error">
+    <div class="cam-err-icon">📷</div>
+    <div class="cam-err-title">Caméra inaccessible</div>
+    <p class="cam-err-text">Autorise l'accès à la caméra dans les réglages de ton navigateur, puis réessaie.</p>
+    <button class="cam-err-btn" onclick="startCamera()">Réessayer</button>
+    <a href="hub.html" class="cam-err-back">← Retour au Hub</a>
+  </div>
+
+  <script src="state.js"></script>
+  <script>
+
+  // ════════════════════════════════════════════════════
+  // ⚙️  CONFIG — tout modifier ici
+  // ════════════════════════════════════════════════════
+
+  // Combien de mots le joueur doit trouver pour gagner
+  const WORDS_TO_WIN = 5;
+
+  // Les 10 filtres / overlays
+  // • src      : chemin vers l'image overlay (PNG transparent recommandé)
+  // • thumb    : chemin vers la miniature affichée dans le carousel
+  //              (peut être la même image — elle sera recadrée)
+  // • word     : mot secret associé à CE filtre
+  //              (null si ce filtre n'a pas de mot caché)
+  // • label    : nom court affiché en tooltip (optionnel)
+  const FILTERS = [
+    { src: 'image/overlay-1.png', thumb: 'image/overlay-1.png', word: 'BOITE',   label: 'Filtre 1'  },
+    { src: 'image/overlay-2.png', thumb: 'image/overlay-2.png', word: 'FORGE',   label: 'Filtre 2'  },
+    { src: 'image/overlay-3.png', thumb: 'image/overlay-3.png', word: 'MARCHE',  label: 'Filtre 3'  },
+    { src: 'image/overlay-4.png', thumb: 'image/overlay-4.png', word: 'CLOCHER', label: 'Filtre 4'  },
+    { src: 'image/overlay-5.png', thumb: 'image/overlay-5.png', word: 'DONJON',  label: 'Filtre 5'  },
+    { src: 'image/overlay-6.png', thumb: 'image/overlay-6.png', word: 'SOURCE',  label: 'Filtre 6'  },
+    { src: 'image/overlay-7.png', thumb: 'image/overlay-7.png', word: 'REMPART', label: 'Filtre 7'  },
+    { src: 'image/overlay-8.png', thumb: 'image/overlay-8.png', word: 'GRENIER', label: 'Filtre 8'  },
+    { src: 'image/overlay-9.png', thumb: 'image/overlay-9.png', word: null,      label: 'Filtre 9'  },
+    { src: 'image/overlay-10.png',thumb: 'image/overlay-10.png',word: null,      label: 'Filtre 10' },
+  ];
+  // ↑ 8 filtres avec un mot caché + 2 leurres sans mot = 10 filtres, 5 à trouver pour gagner
+
+  // ════════════════════════════════════════════════════
+  // ÉTAT
+  // ════════════════════════════════════════════════════
+  let stream        = null;
+  let activeFilter  = 0;                 // index du filtre actif
+  let foundWords    = new Set();         // mots déjà trouvés (normalisés)
+  let toastTimeout  = null;
+  let gameWon       = false;
+
+  // Pool de tous les mots valides (normalisés à l'init)
+  const WORD_POOL = new Map();           // mot_normalisé → index_filtre
+
+  // ════════════════════════════════════════════════════
+  // INIT
+  // ════════════════════════════════════════════════════
+  function normalize(str) {
+    return str.trim().toUpperCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function init() {
+    // Construire le pool
+    FILTERS.forEach((f, i) => {
+      if (f.word) WORD_POOL.set(normalize(f.word), i);
+    });
+
+    buildProgressDots();
+    buildCarousel();
+    setActiveFilter(0);
+    startCamera();
+  }
+
+  // ════════════════════════════════════════════════════
+  // PROGRESSION — 5 points
+  // ════════════════════════════════════════════════════
+  function buildProgressDots() {
+    const wrap = document.getElementById('progress-dots');
+    wrap.innerHTML = '';
+    for (let i = 0; i < WORDS_TO_WIN; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      d.id = `dot-${i}`;
+      wrap.appendChild(d);
+    }
+  }
+
+  function refreshProgressDots() {
+    const count = foundWords.size;
+    for (let i = 0; i < WORDS_TO_WIN; i++) {
+      const d = document.getElementById(`dot-${i}`);
+      if (d) d.classList.toggle('found', i < count);
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // CAROUSEL
+  // ════════════════════════════════════════════════════
+  function buildCarousel() {
+    const carousel = document.getElementById('filter-carousel');
+    carousel.innerHTML = '';
+
+    FILTERS.forEach((f, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn';
+      btn.id = `filter-btn-${i}`;
+      btn.title = f.label || `Filtre ${i + 1}`;
+
+      const img = document.createElement('img');
+      img.src = f.thumb;
+      img.alt = f.label || '';
+      img.onerror = () => { img.src = makePlaceholderThumb(i); };
+
+      const badge = document.createElement('div');
+      badge.className = 'found-badge';
+      badge.textContent = '✓';
+
+      btn.appendChild(img);
+      btn.appendChild(badge);
+      btn.addEventListener('click', () => setActiveFilter(i));
+      carousel.appendChild(btn);
+    });
+  }
+
+  function setActiveFilter(index) {
+    // Retirer active du précédent
+    const prevBtn = document.getElementById(`filter-btn-${activeFilter}`);
+    if (prevBtn) prevBtn.classList.remove('active');
+
+    activeFilter = index;
+
+    // Appliquer le nouvel overlay
+    const f = FILTERS[index];
+    const img = document.getElementById('overlay-img');
+    img.src = f.src;
+
+    // Activer le bouton
+    const btn = document.getElementById(`filter-btn-${index}`);
+    if (btn) {
+      btn.classList.add('active');
+      // Scroll pour le centrer dans le carousel
+      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // PLACEHOLDER THUMBNAIL (dev — si image absente)
+  // ════════════════════════════════════════════════════
+  function makePlaceholderThumb(index) {
+    const colors = ['#1a3a5c','#2980b9','#1a4a2e','#8e44ad','#c0392b',
+                    '#d35400','#16a085','#2c3e50','#7f8c8d','#2e86c1'];
+    const col = colors[index % colors.length];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="54" height="54">
+      <rect width="54" height="54" fill="${col}" rx="4"/>
+      <text x="27" y="34" font-family="monospace" font-size="18" fill="rgba(255,255,255,0.7)"
+            text-anchor="middle" font-weight="bold">${index + 1}</text>
+    </svg>`;
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  function usePlaceholderOverlay() {
+    const img = document.getElementById('overlay-img');
+    const f = FILTERS[activeFilter];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="700">
+      <text x="50%" y="42%" font-family="monospace" font-size="42"
+            fill="rgba(41,128,185,0.75)" text-anchor="middle" font-weight="bold">
+        ${f.label || 'Filtre ' + (activeFilter + 1)}
+      </text>
+      <text x="50%" y="55%" font-family="monospace" font-size="18"
+            fill="rgba(41,128,185,0.35)" text-anchor="middle">
+        [overlay manquant]
+      </text>
+    </svg>`;
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  // ════════════════════════════════════════════════════
+  // CAMÉRA
+  // ════════════════════════════════════════════════════
+  async function startCamera() {
+    document.getElementById('cam-error').classList.remove('show');
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      });
+      const v = document.getElementById('video');
+      v.srcObject = stream;
+      await v.play();
+    } catch (err) {
+      console.error('📷 Caméra:', err);
+      document.getElementById('cam-error').classList.add('show');
+    }
+  }
+
+  function stopCamera() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    document.getElementById('video').srcObject = null;
+  }
+
+  // ════════════════════════════════════════════════════
+  // VALIDATION
+  // ════════════════════════════════════════════════════
+  function validateWord() {
+    if (gameWon) return;
+    const input = document.getElementById('word-input');
+    const raw   = normalize(input.value);
+
+    if (!raw) { showFeedback('Saisis un mot', true); triggerShake(); return; }
+
+    // Déjà trouvé ?
+    if (foundWords.has(raw)) {
+      showFeedback('Déjà trouvé !', true);
+      triggerShake();
+      input.value = '';
+      return;
+    }
+
+    // Mot dans le pool ?
+    if (WORD_POOL.has(raw)) {
+      const filterIndex = WORD_POOL.get(raw);
+      onWordFound(raw, filterIndex);
+      input.value = '';
+    } else {
+      showFeedback("Ce n'est pas le bon mot…", true);
+      triggerShake();
+    }
+  }
+
+  function onWordFound(word, filterIndex) {
+    foundWords.add(word);
+
+    // Badge sur le bouton du filtre correspondant
+    const btn = document.getElementById(`filter-btn-${filterIndex}`);
+    if (btn) btn.classList.add('word-found');
+
+    // Flash input
+    const inp = document.getElementById('word-input');
+    inp.classList.add('success-flash');
+    setTimeout(() => inp.classList.remove('success-flash'), 600);
+
+    // Refresh progress
+    refreshProgressDots();
+
+    // Toast
+    showWordToast(word, foundWords.size);
+
+    // Feedback
+    showFeedback(`+1 — ${foundWords.size} / ${WORDS_TO_WIN}`, false);
+
+    // Victoire ?
+    if (foundWords.size >= WORDS_TO_WIN) {
+      setTimeout(onWin, 1200);
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // TOAST
+  // ════════════════════════════════════════════════════
+  function showWordToast(word, count) {
+    const toast = document.getElementById('word-toast');
+    document.getElementById('toast-word').textContent  = word;
+    document.getElementById('toast-count').textContent = `${count} / ${WORDS_TO_WIN}`;
+
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toast.classList.add('show');
+    toastTimeout = setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  // ════════════════════════════════════════════════════
+  // FEEDBACK
+  // ════════════════════════════════════════════════════
+  function triggerShake() {
+    const inp = document.getElementById('word-input');
+    inp.classList.remove('error');
+    void inp.offsetWidth;
+    inp.classList.add('error');
+    setTimeout(() => inp.classList.remove('error'), 400);
+  }
+
+  function showFeedback(msg, isError) {
+    const fb = document.getElementById('feedback');
+    fb.textContent = msg;
+    fb.className   = 'show ' + (isError ? 'is-error' : 'is-success');
+  }
+
+  // ════════════════════════════════════════════════════
+  // VICTOIRE
+  // ════════════════════════════════════════════════════
+  function onWin() {
+    if (gameWon) return;
+    gameWon = true;
+    stopCamera();
+    markLayerDone('blue');
+
+    // Afficher les mots trouvés
+    const wrap = document.getElementById('win-words-found');
+    wrap.innerHTML = '';
+    foundWords.forEach(w => {
+      const chip = document.createElement('div');
+      chip.className = 'win-word-chip';
+      chip.textContent = w;
+      wrap.appendChild(chip);
+    });
+
+    spawnParticles();
+    setTimeout(() => document.getElementById('win-screen').classList.add('show'), 300);
+  }
+
+  function spawnParticles() {
+    const c = document.getElementById('particles');
+    c.innerHTML = '';
+    const cols = ['#c9a84c','#e8d49a','#2980b9','#1a3a5c','#7fb3d3','#3498db'];
+    for (let i = 0; i < 44; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const sz = 4 + Math.random() * 6;
+      Object.assign(p.style, {
+        left:              Math.random() * 100 + '%',
+        background:        cols[Math.floor(Math.random() * cols.length)],
+        width:             sz + 'px', height: sz + 'px',
+        borderRadius:      Math.random() > 0.5 ? '50%' : '2px',
+        animationDuration: (1.4 + Math.random() * 2) + 's',
+        animationDelay:    (Math.random() * 0.8) + 's',
+      });
+      c.appendChild(p);
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  // EVENTS
+  // ════════════════════════════════════════════════════
+  document.getElementById('btn-validate').addEventListener('click', validateWord);
+  document.getElementById('word-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); validateWord(); }
+  });
+
+  window.addEventListener('load', init);
+  window.addEventListener('beforeunload', stopCamera);
+
+  </script>
+</body>
+</html>

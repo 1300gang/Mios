@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Masque de Fayçal — Révélation</title>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+      "mindar-face-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-three.prod.js"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+
+  <style>
+    /* reveal */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --noir:    #0a0804;
+      --or:      #c9a84c;
+      --or-pale: #e8d49a;
+      --creme:   #f5f0e8;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--noir);
+      font-family: 'Crimson Pro', serif;
+      color: var(--creme);
+    }
+
+    /* ══════════════════════════════════════
+       FACE TRACKING
+    ══════════════════════════════════════ */
+    #ar-container {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      width: 100dvw;
+      height: 100dvh;
+    }
+
+    #ar-container canvas,
+    #ar-container video {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover;
+    }
+
+    #ar-container > div {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      overflow: hidden;
+    }
+
+    /* ══════════════════════════════════════
+       LOADER
+    ══════════════════════════════════════ */
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--noir);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      transition: opacity 1s ease;
+    }
+
+    #loader.fade-out { opacity: 0; pointer-events: none; }
+
+    .loader-ring {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      border: 2px solid var(--or);
+      border-top-color: transparent;
+      animation: spin 1.1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loader-text {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.7);
+    }
+
+    /* ══════════════════════════════════════
+       VIGNETTE
+    ══════════════════════════════════════ */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 35%, rgba(10,8,4,0.7) 100%);
+    }
+
+    /* ══════════════════════════════════════
+       UI LAYER
+    ══════════════════════════════════════ */
+    #ui-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    #ui-layer.visible { opacity: 1; }
+
+    /* Header discret */
+    #header {
+      padding: 16px 18px 0;
+      display: flex;
+      justify-content: flex-end;
+      pointer-events: all;
+    }
+
+    #btn-replay {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.45);
+      border: 1px solid rgba(201,168,76,0.15);
+      padding: 7px 12px;
+      border-radius: 2px;
+      background: rgba(10,8,4,0.5);
+      backdrop-filter: blur(6px);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    #btn-replay:active { color: var(--or); border-color: var(--or); }
+
+    /* ══════════════════════════════════════
+       PHASE 1 — INTRO "LE MASQUE SE LÈVE"
+       Texte qui apparaît avant l'explosion
+    ══════════════════════════════════════ */
+    #intro-text {
+      position: fixed;
+      inset: 0;
+      z-index: 8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    #intro-text.show  { opacity: 1; }
+    #intro-text.hide  { opacity: 0; }
+
+    .intro-orn {
+      display: flex; align-items: center; gap: 10px;
+      animation: fadeUp 0.7s ease 0.2s both;
+    }
+
+    .orn-line {
+      width: 40px; height: 1px;
+      background: linear-gradient(to right, transparent, var(--or));
+    }
+
+    .orn-line.r { background: linear-gradient(to left, transparent, var(--or)); }
+    .orn-diamond { width: 5px; height: 5px; background: var(--or); transform: rotate(45deg); }
+
+    .intro-headline {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(18px, 5.5vw, 28px);
+      font-weight: 400;
+      color: var(--or-pale);
+      letter-spacing: 0.12em;
+      text-align: center;
+      text-shadow: 0 0 40px rgba(201,168,76,0.5);
+      animation: fadeUp 0.7s ease 0.4s both;
+    }
+
+    .intro-sub {
+      font-size: 14px;
+      font-style: italic;
+      font-weight: 300;
+      color: rgba(245,240,232,0.5);
+      letter-spacing: 0.08em;
+      text-align: center;
+      animation: fadeUp 0.7s ease 0.6s both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════════════════════════════════
+       PHASE 2 — EFFETS JUICY
+    ══════════════════════════════════════ */
+
+    /* ── Particules canvas ───────────────── */
+    #particles-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #particles-canvas.show { opacity: 1; }
+
+    /* ── Rayons de lumière ───────────────── */
+    #rays {
+      position: fixed;
+      inset: 0;
+      z-index: 6;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    #rays.show { opacity: 1; }
+
+    #rays svg {
+      width: 100%; height: 100%;
+    }
+
+    .ray {
+      transform-origin: 50% 50%;
+      animation: rayPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes rayPulse {
+      0%, 100% { opacity: 0.08; transform: rotate(0deg) scaleY(1); }
+      50%       { opacity: 0.18; transform: rotate(2deg) scaleY(1.02); }
+    }
+
+    /* ── Étoiles CSS scintillantes ────────── */
+    #stars {
+      position: fixed;
+      inset: 0;
+      z-index: 16;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    #stars.show { opacity: 1; }
+
+    .star {
+      position: absolute;
+      width: 4px; height: 4px;
+      background: var(--or);
+      clip-path: polygon(
+        50% 0%, 61% 35%, 98% 35%,
+        68% 57%, 79% 91%, 50% 70%,
+        21% 91%, 32% 57%, 2% 35%, 39% 35%
+      );
+      animation: starPop ease-out forwards, starGlow ease-in-out infinite;
+    }
+
+    @keyframes starPop {
+      0%   { transform: scale(0) rotate(0deg);   opacity: 0; }
+      40%  { transform: scale(1.4) rotate(60deg); opacity: 1; }
+      100% { transform: scale(1) rotate(120deg);  opacity: 0.8; }
+    }
+
+    @keyframes starGlow {
+      0%, 100% { filter: brightness(1); }
+      50%       { filter: brightness(2); }
+    }
+
+    /* ── Flash d'entrée ──────────────────── */
+    #flash {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(232, 212, 154, 0.6);
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    #flash.burst {
+      animation: flashBurst 0.5s ease-out forwards;
+    }
+
+    @keyframes flashBurst {
+      0%   { opacity: 0.7; }
+      100% { opacity: 0; }
+    }
+
+    /* ══════════════════════════════════════
+       PHASE 3 — CARTE DE FÉLICITATIONS
+    ══════════════════════════════════════ */
+    #congrats-card {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      z-index: 30;
+      padding: 0 16px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      transform: translateY(100%);
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    #congrats-card.show {
+      transform: translateY(0);
+      pointer-events: all;
+    }
+
+    /* PNG de félicitations (asset à fournir) */
+    #congrats-img {
+      width: min(320px, 80vw);
+      height: auto;
+      border-radius: 4px;
+      /* Glow doré */
+      filter: drop-shadow(0 0 20px rgba(201,168,76,0.5));
+      animation: floatAnim 3s ease-in-out infinite;
+    }
+
+    @keyframes floatAnim {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-8px); }
+    }
+
+    /* Fallback si le PNG est absent */
+    #congrats-fallback {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: rgba(10,8,4,0.82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(201,168,76,0.35);
+      border-radius: 4px;
+      padding: 24px 32px;
+      width: min(320px, 88vw);
+    }
+
+    #congrats-fallback.show { display: flex; }
+
+    .congrats-big {
+      font-size: 48px;
+      animation: floatAnim 3s ease-in-out infinite;
+    }
+
+    .congrats-title {
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--or-pale);
+      letter-spacing: 0.12em;
+      text-align: center;
+    }
+
+    .congrats-sub {
+      font-size: 14px;
+      font-style: italic;
+      font-weight: 300;
+      color: rgba(245,240,232,0.6);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    /* Bouton rejouer */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      width: min(320px, 88vw);
+    }
+
+    #btn-again {
+      flex: 1;
+      padding: 14px;
+      background: rgba(10,8,4,0.75);
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 2px;
+      color: rgba(201,168,76,0.7);
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #btn-share {
+      flex: 1;
+      padding: 14px;
+      background: var(--or);
+      border: none;
+      border-radius: 2px;
+      color: var(--noir);
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ══════════════════════════════════════
+       ANNEAU DORÉ AUTOUR DU VISAGE
+       Pulse une fois les 3 couches levées
+    ══════════════════════════════════════ */
+    #face-ring {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      z-index: 7;
+      width: min(280px, 70vw);
+      height: min(280px, 70vw);
+      border-radius: 50%;
+      border: 2px solid rgba(201,168,76,0.6);
+      pointer-events: none;
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #face-ring.show {
+      transform: translate(-50%, -50%) scale(1);
+      animation: ringPulse 2s ease-in-out 0.5s infinite;
+    }
+
+    @keyframes ringPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.3); }
+      50%       { box-shadow: 0 0 0 16px rgba(201,168,76,0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="loader-ring"></div>
+    <p class="loader-text">Le voile se lève…</p>
+  </div>
+
+  <!-- Vignette -->
+  <div class="vignette"></div>
+
+  <!-- Face tracking -->
+  <div id="ar-container"></div>
+
+  <!-- Rayons de lumière -->
+  <div id="rays">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- 8 rayons depuis le centre -->
+      <g fill="rgba(201,168,76,0.12)">
+        <polygon class="ray" points="50,50 45,0 55,0"  style="animation-delay:0s"/>
+        <polygon class="ray" points="50,50 70,5 80,15" style="animation-delay:0.3s"/>
+        <polygon class="ray" points="50,50 95,40 95,55" style="animation-delay:0.6s"/>
+        <polygon class="ray" points="50,50 80,80 70,90" style="animation-delay:0.9s"/>
+        <polygon class="ray" points="50,50 55,100 45,100" style="animation-delay:1.2s"/>
+        <polygon class="ray" points="50,50 30,90 20,80" style="animation-delay:1.5s"/>
+        <polygon class="ray" points="50,50 5,60 5,45" style="animation-delay:1.8s"/>
+        <polygon class="ray" points="50,50 20,15 30,5" style="animation-delay:2.1s"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Flash d'entrée -->
+  <div id="flash"></div>
+
+  <!-- Anneau doré face -->
+  <div id="face-ring"></div>
+
+  <!-- Canvas particules -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- Étoiles scintillantes -->
+  <div id="stars"></div>
+
+  <!-- Phase 1 : texte intro -->
+  <div id="intro-text">
+    <div class="intro-orn">
+      <div class="orn-line"></div>
+      <div class="orn-diamond"></div>
+      <div class="orn-line r"></div>
+    </div>
+    <div class="intro-headline">Le masque est levé</div>
+    <div class="intro-sub">le visage de Fayçal se révèle…</div>
+  </div>
+
+  <!-- UI layer -->
+  <div id="ui-layer">
+    <div id="header">
+      <button id="btn-replay" onclick="triggerReplay()">Rejouer</button>
+    </div>
+    <div></div>
+  </div>
+
+  <!-- Phase 3 : félicitations -->
+  <div id="congrats-card">
+    <img id="congrats-img"
+         src="assets/congrats.png"
+         alt="Félicitations"
+         onerror="showFallback()">
+    <div id="congrats-fallback">
+      <div class="congrats-big">✦</div>
+      <div class="congrats-title">Le masque est brisé</div>
+      <p class="congrats-sub">
+        Tu as percé les trois mystères.<br>
+        La vérité était là, derrière le voile.
+      </p>
+    </div>
+    <div class="btn-row">
+      <a href="index.html" id="btn-again" onclick="triggerReplay()">↺ Recommencer</a>
+      <button id="btn-share" onclick="shareResult()">Partager ✦</button>
+    </div>
+  </div>
+
+  <script src="state.js"></script>
+
+  <!-- MindAR Three.js -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { MindARThree } from 'mindar-face-three';
+
+    // ── Assets ─────────────────────────────
+    const MASK_BASE_URL = 'assets/mask-base.png';
+    const PLACEHOLDER_BASE = 'https://placehold.co/512x512/2a1a00/c9a84c?text=MASQUE+REVELE';
+
+    let mindarThree = null;
+
+    function waitForStableViewport() {
+      return new Promise((resolve) => {
+        if (window.visualViewport) {
+          let done = false;
+          const finish = () => {
+            if (done) return;
+            done = true;
+            window.visualViewport.removeEventListener('resize', finish);
+            requestAnimationFrame(() => requestAnimationFrame(resolve));
+          };
+          window.visualViewport.addEventListener('resize', finish);
+          setTimeout(() => { if (!done) { done = true; resolve(); } }, 350);
+        } else {
+          setTimeout(resolve, 150);
+        }
+      });
+    }
+
+    function lockContainerSize() {
+      const c  = document.querySelector('#ar-container');
+      const vv = window.visualViewport;
+      const w  = vv ? Math.round(vv.width)  : window.innerWidth;
+      const h  = vv ? Math.round(vv.height) : window.innerHeight;
+      c.style.width  = w + 'px';
+      c.style.height = h + 'px';
+      c.style.top    = '0px';
+      c.style.left   = '0px';
+    }
+
+    function recalibrateAR() {
+      requestAnimationFrame(() => {
+        document.querySelector('#ar-container')
+          .querySelectorAll('canvas, video, div').forEach(el => {
+            if (el.style.top && el.style.top !== '0px') el.style.top = '0px';
+          });
+        window.dispatchEvent(new Event('resize'));
+      });
+    }
+
+    async function initAR() {
+      await waitForStableViewport();
+      lockContainerSize();
+
+      mindarThree = new MindARThree({
+        container: document.querySelector('#ar-container'),
+      });
+
+      const { renderer, scene, camera } = mindarThree;
+
+      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1.2);
+      scene.add(light);
+
+      // Masque seul — sans aucune couche colorée
+      const faceMesh = mindarThree.addFaceMesh();
+      const loader   = new THREE.TextureLoader();
+
+      await new Promise((resolve) => {
+        loader.load(
+          MASK_BASE_URL,
+          (tex) => {
+            tex.encoding = THREE.sRGBEncoding;
+            faceMesh.material = new THREE.MeshBasicMaterial({
+              map: tex,
+              transparent: true,
+              side: THREE.DoubleSide,
+              alphaTest: 0.05,
+            });
+            faceMesh.material.needsUpdate = true;
+            resolve();
+          },
+          undefined,
+          () => {
+            // Fallback placeholder
+            loader.load(PLACEHOLDER_BASE, (tex) => {
+              tex.encoding = THREE.sRGBEncoding;
+              faceMesh.material = new THREE.MeshBasicMaterial({
+                map: tex, transparent: true,
+                side: THREE.DoubleSide, alphaTest: 0.05, opacity: 0.7,
+              });
+              faceMesh.material.needsUpdate = true;
+              resolve();
+            }, undefined, resolve);
+          }
+        );
+      });
+
+      scene.add(faceMesh);
+
+      await mindarThree.start();
+
+      recalibrateAR();
+      setTimeout(recalibrateAR, 200);
+
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+      });
+
+      // Masquer le loader
+      const loaderEl = document.getElementById('loader');
+      loaderEl.classList.add('fade-out');
+      setTimeout(() => {
+        loaderEl.remove();
+        // Lancer la séquence juicy
+        window.startRevealSequence();
+      }, 1000);
+    }
+
+    // Exposer stopAR globalement
+    window.stopAR = function () {
+      try {
+        if (mindarThree) {
+          mindarThree.stop();
+          mindarThree.renderer.setAnimationLoop(null);
+        }
+      } catch (e) { console.warn('stopAR:', e); }
+    };
+
+    initAR().catch((err) => {
+      console.error('❌ AR:', err);
+      document.getElementById('loader').remove();
+      window.startRevealSequence();
+    });
+  </script>
+
+  <!-- Séquence juicy + logique UI (vanilla, hors module) -->
+  <script>
+  // ══════════════════════════════════════════
+  // SÉQUENCE DE RÉVÉLATION
+  // Timing orchestré entièrement en CSS + JS vanilla
+  // ══════════════════════════════════════════
+
+  let sequenceDone = false;
+
+  window.startRevealSequence = function () {
+    if (sequenceDone) return;
+    sequenceDone = true;
+
+    const delay = (ms) => new Promise(r => setTimeout(r, ms));
+
+    (async () => {
+      // 0 — UI visible
+      document.getElementById('ui-layer').classList.add('visible');
+
+      // 1 — Texte intro (0.2s)
+      await delay(200);
+      document.getElementById('intro-text').classList.add('show');
+
+      // 2 — Flash (1.8s)
+      await delay(1800);
+      document.getElementById('flash').classList.add('burst');
+
+      // 3 — Rayons + anneau + étoiles (2s)
+      await delay(200);
+      document.getElementById('intro-text').classList.add('hide');
+      document.getElementById('rays').classList.add('show');
+      document.getElementById('face-ring').classList.add('show');
+      document.getElementById('stars').classList.add('show');
+      document.getElementById('particles-canvas').classList.add('show');
+      spawnStars(32);
+      startParticles();
+
+      // 4 — Carte félicitations slide-up (3s)
+      await delay(1000);
+      document.getElementById('congrats-card').classList.add('show');
+
+    })();
+  };
+
+  // ══════════════════════════════════════════
+  // PARTICULES CANVAS — confettis dorés
+  // ══════════════════════════════════════════
+  let particleRAF = null;
+
+  function startParticles() {
+    const canvas = document.getElementById('particles-canvas');
+    const ctx    = canvas.getContext('2d');
+
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const COLS = ['#c9a84c','#e8d49a','#fff8e0','#27ae60','#e05252','#9c88ff','#3498db'];
+    const particles = [];
+
+    // Créer 80 particules depuis le centre
+    const cx = canvas.width  / 2;
+    const cy = canvas.height * 0.4;
+
+    for (let i = 0; i < 80; i++) {
+      const angle  = (Math.random() * Math.PI * 2);
+      const speed  = 2 + Math.random() * 6;
+      const size   = 3 + Math.random() * 6;
+      const isRect = Math.random() > 0.5;
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - (Math.random() * 3), // léger biais vers le haut
+        size,
+        color: COLS[Math.floor(Math.random() * COLS.length)],
+        alpha: 1,
+        rot: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.15,
+        isRect,
+        gravity: 0.12 + Math.random() * 0.08,
+      });
+    }
+
+    function tick() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = 0;
+
+      particles.forEach(p => {
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.vy += p.gravity;
+        p.vx *= 0.99;
+        p.rot += p.rotSpeed;
+        p.alpha -= 0.008;
+        if (p.alpha <= 0) return;
+        alive++;
+
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+
+        if (p.isRect) {
+          ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      if (alive > 0) {
+        particleRAF = requestAnimationFrame(tick);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Relancer une pluie légère en continu
+        startParticleRain();
+      }
+    }
+
+    particleRAF = requestAnimationFrame(tick);
+  }
+
+  // Pluie légère de confettis en continu après le burst
+  function startParticleRain() {
+    const canvas = document.getElementById('particles-canvas');
+    const ctx    = canvas.getContext('2d');
+    const COLS   = ['#c9a84c','#e8d49a','#fff','rgba(201,168,76,0.5)'];
+    const flakes = [];
+
+    for (let i = 0; i < 24; i++) {
+      flakes.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height,
+        vy: 0.8 + Math.random() * 1.5,
+        vx: (Math.random() - 0.5) * 0.5,
+        size: 2 + Math.random() * 4,
+        color: COLS[Math.floor(Math.random() * COLS.length)],
+        alpha: 0.3 + Math.random() * 0.5,
+        rot: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.04,
+      });
+    }
+
+    function tickRain() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      flakes.forEach(p => {
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.rot += p.rotSpeed;
+        if (p.y > canvas.height + 20) {
+          p.y = -20;
+          p.x = Math.random() * canvas.width;
+        }
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        ctx.restore();
+      });
+      particleRAF = requestAnimationFrame(tickRain);
+    }
+
+    tickRain();
+  }
+
+  // ══════════════════════════════════════════
+  // ÉTOILES CSS
+  // ══════════════════════════════════════════
+  function spawnStars(count) {
+    const container = document.getElementById('stars');
+    container.innerHTML = '';
+
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = 8 + Math.random() * 14;
+      Object.assign(s.style, {
+        left:   Math.random() * 100 + '%',
+        top:    Math.random() * 80  + '%',
+        width:  size + 'px',
+        height: size + 'px',
+        animationDuration:  (0.4 + Math.random() * 0.4) + 's, ' + (1.5 + Math.random() * 1.5) + 's',
+        animationDelay:     (Math.random() * 1.2) + 's, ' + (Math.random() * 0.5) + 's',
+        background: Math.random() > 0.7 ? '#e8d49a' : '#c9a84c',
+      });
+      container.appendChild(s);
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // FALLBACK CONGRATS PNG
+  // ══════════════════════════════════════════
+  function showFallback() {
+    document.getElementById('congrats-img').style.display = 'none';
+    document.getElementById('congrats-fallback').classList.add('show');
+  }
+
+  // ══════════════════════════════════════════
+  // REPLAY
+  // ══════════════════════════════════════════
+  function triggerReplay() {
+    if (particleRAF) cancelAnimationFrame(particleRAF);
+    stopAR();
+    resetState();
+    // navigation gérée par le href du lien
+  }
+
+  // ══════════════════════════════════════════
+  // PARTAGE WEB SHARE API
+  // ══════════════════════════════════════════
+  async function shareResult() {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Masque de Fayçal',
+          text:  'J\'ai levé le masque de Fayçal ! Peux-tu en faire autant ?',
+          url:   window.location.origin + '/index.html',
+        });
+      } catch (e) {
+        // Annulé par l'utilisateur — pas d'erreur à afficher
+      }
+    } else {
+      // Fallback : copier l'URL
+      try {
+        await navigator.clipboard.writeText(window.location.origin + '/index.html');
+        alert('Lien copié !');
+      } catch (e) {
+        console.warn('Clipboard:', e);
+      }
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // NETTOYAGE
+  // ══════════════════════════════════════════
+  window.addEventListener('beforeunload', () => {
+    if (particleRAF) cancelAnimationFrame(particleRAF);
+    stopAR();
+  });
+  </script>
+
+</body>
+</html>

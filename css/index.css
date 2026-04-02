@@ -1,0 +1,161 @@
+/* ═══════════════════════════════════════════════════════════════
+   INDEX.CSS — Page d'introduction narrative
+   Dépend de base.css
+═══════════════════════════════════════════════════════════════ */
+
+/* body centré pour cette page uniquement */
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── FOND GRAIN/VIGNETTE ────────────────────────────────────── */
+.bg-noise {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.bg-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, rgba(50, 30, 0, 0.15) 0%, rgba(10, 8, 4, 0.7) 100%);
+}
+
+/* ── CONTENU PRINCIPAL ──────────────────────────────────────── */
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 0 32px;
+  max-width: 400px;
+  width: 100%;
+}
+
+/* Ornement supérieur */
+.ornament {
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.2s forwards;
+}
+
+/* Titre principal */
+h1 {
+  font-family: 'Cinzel', serif;
+  font-weight: 400;
+  font-size: clamp(24px, 7vw, 36px);
+  letter-spacing: 0.15em;
+  text-align: center;
+  color: var(--or-pale);
+  line-height: 1.2;
+  opacity: 0;
+  animation: fadeUp 0.9s ease 0.4s forwards;
+}
+
+h1 em {
+  display: block;
+  font-style: italic;
+  font-size: 0.55em;
+  letter-spacing: 0.35em;
+  color: rgba(201, 168, 76, 0.6);
+  margin-top: 6px;
+  font-weight: 400;
+}
+
+/* Séparateur vertical */
+.sep {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--or), transparent);
+  margin: 20px 0;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.6s forwards;
+}
+
+/* Texte narratif */
+.intro-text {
+  font-size: clamp(14px, 4vw, 17px);
+  font-weight: 300;
+  line-height: 1.75;
+  text-align: center;
+  color: rgba(245, 240, 232, 0.75);
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.8s forwards;
+}
+
+.intro-text strong {
+  color: var(--or-pale);
+  font-weight: 400;
+}
+
+.ornament-bottom {
+  margin-top: 20px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 1.0s forwards;
+}
+
+/* ── CTA ────────────────────────────────────────────────────── */
+.cta-wrap {
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 1.2s forwards;
+  width: 100%;
+}
+
+.btn-start {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--noir);
+  background: var(--or);
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-start::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0);
+  transition: background 0.15s;
+}
+
+.btn-start:active::before {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-hint {
+  font-size: 11px;
+  color: rgba(245, 240, 232, 0.3);
+  letter-spacing: 0.1em;
+  font-style: italic;
+}
+
+/* ── TRANSITION DE SORTIE ───────────────────────────────────── */
+body.leaving {
+  animation: fadeOut 0.4s ease forwards;
+}

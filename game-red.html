@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Masque de Fayçal — Suika</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
+  <style>
+    /* Jeu Rouge  */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --noir:      #0a0804;
+      --or:        #c9a84c;
+      --or-pale:   #e8d49a;
+      --rouge:     #8b1a1a;
+      --rouge-vif: #c0392b;
+      --creme:     #f5f0e8;
+      --mur:       #3d1a0a;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--noir);
+      font-family: 'Crimson Pro', serif;
+      color: var(--creme);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── HEADER ─────────────────────────── */
+    #header {
+      width: 100%;
+      max-width: 420px;
+      padding: 14px 16px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    #btn-back {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.55);
+      text-decoration: none;
+      border: 1px solid rgba(201,168,76,0.2);
+      padding: 7px 12px;
+      border-radius: 2px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #btn-back:active { color: var(--or); border-color: var(--or); }
+
+    .header-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .score-label {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.5);
+    }
+
+    #score {
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--or-pale);
+      line-height: 1;
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .next-label {
+      font-family: 'Cinzel', serif;
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(201,168,76,0.45);
+    }
+
+    #nextFruitCanvas { width: 40px; height: 40px; }
+
+    /* ── ZONE DE JEU ────────────────────── */
+    #game-wrap {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+    }
+
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    /* Ligne de danger */
+    #danger-line {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--rouge-vif) 0px, var(--rouge-vif) 8px,
+        transparent 8px, transparent 16px
+      );
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    /* Guideline verticale */
+    #guideLine {
+      position: absolute;
+      top: 0;
+      width: 1px;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(201,168,76,0.45) 0px, rgba(201,168,76,0.45) 4px,
+        transparent 4px, transparent 8px
+      );
+      pointer-events: none;
+      display: none;
+    }
+
+    /* ── GAME OVER ───────────────────────── */
+    #gameOverScreen {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 8, 4, 0.88);
+      backdrop-filter: blur(6px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      z-index: 20;
+    }
+
+    .over-title {
+      font-family: 'Cinzel', serif;
+      font-size: 30px;
+      font-weight: 400;
+      color: var(--rouge-vif);
+      letter-spacing: 0.08em;
+    }
+
+    .over-score-wrap {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(232,212,154,0.7);
+      text-align: center;
+    }
+
+    .over-score-wrap span {
+      display: block;
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--or-pale);
+      margin-top: 4px;
+    }
+
+    #restartButton {
+      padding: 14px 36px;
+      background: var(--rouge);
+      border: none;
+      border-radius: 2px;
+      color: var(--creme);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 6px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── VICTOIRE ────────────────────────── */
+    #winScreen {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 8, 4, 0.93);
+      backdrop-filter: blur(10px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      z-index: 30;
+      padding: 32px;
+    }
+
+    #winScreen.show { display: flex; }
+
+    .win-orn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: fadeUp 0.5s ease 0.1s both;
+    }
+
+    .win-orn-line {
+      width: 44px; height: 1px;
+      background: linear-gradient(to right, transparent, var(--or));
+    }
+
+    .win-orn-line.r {
+      background: linear-gradient(to left, transparent, var(--or));
+    }
+
+    .win-diamond {
+      width: 6px; height: 6px;
+      background: var(--or);
+      transform: rotate(45deg);
+    }
+
+    .win-emoji {
+      font-size: 60px;
+      animation: pop 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0) rotate(-20deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+    }
+
+    .win-title {
+      font-family: 'Cinzel', serif;
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--or-pale);
+      letter-spacing: 0.12em;
+      text-align: center;
+      animation: fadeUp 0.5s ease 0.35s both;
+    }
+
+    .win-sub {
+      font-size: 15px;
+      font-style: italic;
+      font-weight: 300;
+      color: rgba(245,240,232,0.6);
+      text-align: center;
+      line-height: 1.8;
+      animation: fadeUp 0.5s ease 0.5s both;
+    }
+
+    #btn-hub {
+      display: block;
+      padding: 15px 40px;
+      background: var(--or);
+      border: none;
+      border-radius: 2px;
+      color: var(--noir);
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      margin-top: 6px;
+      animation: fadeUp 0.5s ease 0.7s both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Particules */
+    .particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: pffall linear forwards;
+    }
+
+    @keyframes pffall {
+      0%   { transform: translateY(-10px) rotate(0deg);    opacity: 1; }
+      100% { transform: translateY(110vh) rotate(540deg);  opacity: 0; }
+    }
+
+    /* ── MOT EN COURS ─────────────────────── */
+    #word-bar {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 4px 16px 10px;
+      flex-shrink: 0;
+    }
+
+    #word-display {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .word-char {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      font-weight: 700;
+      width: 22px;
+      text-align: center;
+      line-height: 1;
+      transition: all 0.3s ease;
+    }
+
+    .word-char.revealed {
+      color: var(--or-pale);
+      text-shadow: 0 0 8px rgba(201,168,76,0.5);
+    }
+
+    .word-char.hidden {
+      color: rgba(255,255,255,0.12);
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    #btn-type-word {
+      background: none;
+      border: 1px solid rgba(201,168,76,0.3);
+      color: rgba(201,168,76,0.6);
+      font-size: 14px;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.2s;
+    }
+
+    #btn-type-word:active { color: var(--or); border-color: var(--or); }
+
+    /* ── MODALE SAISIE ────────────────────── */
+    .word-modal-hidden { display: none !important; }
+
+    #word-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,8,4,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    #word-modal-box {
+      background: #1a0d05;
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 4px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: fadeUp 0.25s ease both;
+    }
+
+    .wm-title {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--or-pale);
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    .wm-sub {
+      font-size: 13px;
+      font-style: italic;
+      color: rgba(245,240,232,0.5);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    #word-input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 2px;
+      padding: 12px 14px;
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--or-pale);
+      text-align: center;
+      outline: none;
+    }
+
+    #word-input:focus { border-color: rgba(201,168,76,0.6); }
+
+    #word-feedback {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-align: center;
+      min-height: 16px;
+      transition: color 0.2s;
+    }
+
+    #word-feedback.ok  { color: #27ae60; }
+    #word-feedback.err { color: var(--rouge-vif); }
+
+    .wm-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .wm-actions button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 2px;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #btn-word-cancel { background: rgba(255,255,255,0.07); color: rgba(245,240,232,0.5); }
+    #btn-word-submit { background: var(--or); color: var(--noir); }
+
+    /* ── ÉVOLUTION ───────────────────────── */
+    #evo-bar {
+      width: 100%;
+      max-width: 420px;
+      padding: 5px 10px 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex-shrink: 0;
+    }
+
+    #evo-bar::-webkit-scrollbar { display: none; }
+
+    #evolutionGrid {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: max-content;
+    }
+
+    .evo-fruit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .evo-fruit canvas { width: 34px; height: 34px; }
+    .evo-fruit.wm canvas { width: 34px; height: 34px; }
+
+    .evo-name {
+      visibility: hidden;
+      font-family: 'Cinzel', serif;
+      font-size: 6px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(245,240,232,0.35);
+      text-align: center;
+    }
+
+    .evo-fruit.wm .evo-name { color: var(--or); }
+
+    .evo-arr {
+      font-size: 9px;
+      color: rgba(201,168,76,0.25);
+      align-self: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <script src="state.js"></script>
+
+  <!-- HEADER -->
+  <div id="header">
+    <a href="hub.html" id="btn-back" onclick="cleanupGame()">← Hub</a>
+    <div class="header-center">
+      <span class="score-label">Score</span>
+      <span id="score">0</span>
+    </div>
+    <div class="header-right">
+      <span class="next-label">Suivant</span>
+      <canvas id="nextFruitCanvas" width="80" height="80"></canvas>
+    </div>
+  </div>
+
+  <!-- JEU -->
+  <div id="game-wrap">
+    <div id="danger-line"></div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="guideLine"></div>
+
+    <div id="gameOverScreen">
+      <div class="over-title">Perdu</div>
+      <div class="over-score-wrap">
+        Score final
+        <span id="finalScore">0</span>
+      </div>
+      <button id="restartButton">Rejouer</button>
+    </div>
+
+    <div id="winScreen">
+      <div class="particles" id="particles"></div>
+      <div class="win-orn">
+        <div class="win-orn-line"></div>
+        <div class="win-diamond"></div>
+        <div class="win-orn-line r"></div>
+      </div>
+      <div class="win-emoji">🍉</div>
+      <div class="win-title">La Pastèque !</div>
+      <p class="win-sub">La couche rouge du masque<br>se dissout dans l'obscurité…</p>
+      <a href="hub.html?win=red" id="btn-hub">← Retour au masque</a>
+    </div>
+  </div>
+
+  <!-- BARRE D'ÉVOLUTION -->
+  <div id="evo-bar">
+    <div id="evolutionGrid"></div>
+  </div>
+
+  <!-- MOT EN COURS DE DÉCOUVERTE -->
+  <div id="word-bar">
+    <div id="word-display"></div>
+    <button id="btn-type-word" title="Saisir le mot directement">✎</button>
+  </div>
+
+  <!-- MODALE SAISIE DIRECTE -->
+  <div id="word-modal" class="word-modal-hidden">
+    <div id="word-modal-box">
+      <div class="wm-title">Tu as trouvé le mot ?</div>
+      <p class="wm-sub">Les joueurs moins à l'aise avec le jeu peuvent saisir le mot directement.</p>
+      <input id="word-input" type="text" placeholder="Ton mot…" autocomplete="off" autocorrect="off" spellcheck="false" />
+      <div id="word-feedback"></div>
+      <div class="wm-actions">
+        <button id="btn-word-cancel">Annuler</button>
+        <button id="btn-word-submit">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ── Config ─────────────────────────────────
+  const SCALE = 1.5;
+
+  // ── MOT SECRET ──────────────────────────────
+  // Changer ce mot pour paramétrer l'énigme.
+  // Il doit avoir exactement autant de lettres que de fruits (9 ici).
+  const SECRET_WORD = 'GIRONDINS'; // 9 lettres = 1 par fruit
+
+  // Images préchargées
+  const loadedImages = [];
+
+  // ── FRUITS ──────────────────────────────────
+  // img  : chemin vers le PNG (le PNG contient déjà la lettre dessinée dessus)
+  //        mettre null = placeholder cercle coloré uni (sans lettre)
+  // color: couleur de fallback si le PNG n'est pas encore chargé
+  const FRUITS = [
+    { name: 'Cerise',   radius: Math.round(15*SCALE), color: '#e05252', img: 'image/letters/letter-O.png', score: 1,  density: 0.0015 },
+    { name: 'Fraise',   radius: Math.round(20*SCALE), color: '#e07878', img: 'image/deasasin.png', score: 3,  density: 0.0014 },
+    { name: 'Raisin',   radius: Math.round(25*SCALE), color: '#9c88ff', img: null, score: 6,  density: 0.0013 },
+    { name: 'Orange',   radius: Math.round(35*SCALE), color: '#e88c2a', img: null, score: 10, density: 0.0012 },
+    { name: 'Pomme',    radius: Math.round(45*SCALE), color: '#c0392b', img: null, score: 15, density: 0.0011 },
+    { name: 'Poire',    radius: Math.round(55*SCALE), color: '#a8c96e', img: null, score: 21, density: 0.0010 },
+    { name: 'Pêche',    radius: Math.round(65*SCALE), color: '#e8c46a', img: null, score: 28, density: 0.0009 },
+    { name: 'Ananas',   radius: Math.round(75*SCALE), color: '#ffff17', img: null, score: 36, density: 0.0008 },
+    { name: 'Pastèque', radius: Math.round(90*SCALE), color: '#27ae60', img: null, score: 45, density: 0.0007 },
+  ];
+  const WM_IDX   = FRUITS.length - 1;
+  const TOP_LINE = 80;
+  const MUR_COL  = '#3d1a0a';
+
+  // Lettres révélées (true = visible dans la barre)
+  // La première lettre est toujours révélée d'entrée
+  const revealedLetters = FRUITS.map((_, i) => i === 0);
+
+  // Précharge les images définies dans chaque fruit
+  function preloadImages() {
+    FRUITS.forEach((f, i) => {
+      if (f.img) {
+        const img = new Image();
+        img.src = f.img;
+        loadedImages[i] = img;
+      } else {
+        loadedImages[i] = null;
+      }
+    });
+  }
+
+  // ── État ────────────────────────────────────
+  let engine, world, render, runner;
+  let currentBody = null, currentFruit = null, nextFruit = null;
+  let disableAction = false, isPressed = false, isTouchDevice = false;
+  let currentX, GAME_W, GAME_H;
+  let score = 0;
+  let highScore = parseInt(localStorage.getItem('masque_suika_hs') || '0');
+  let wmAppeared = false, gameWon = false;
+
+  const canvas         = document.getElementById('gameCanvas');
+  const gameOverScreen = document.getElementById('gameOverScreen');
+  const winScreen      = document.getElementById('winScreen');
+  const guideLine      = document.getElementById('guideLine');
+
+  // ── Resize ──────────────────────────────────
+  function measureGame() {
+    const wrap = document.getElementById('game-wrap');
+    GAME_W = wrap.clientWidth;
+    GAME_H = wrap.clientHeight;
+    currentX = GAME_W / 2;
+  }
+
+  // ── Helpers ─────────────────────────────────
+  function clampX(x) {
+    const r = currentFruit ? currentFruit.radius : 30;
+    return Math.max(r + 10, Math.min(x, GAME_W - r - 10));
+  }
+
+  function getEventX(e) {
+    const rect   = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    if (e.touches && e.touches.length > 0)
+      return (e.touches[0].clientX - rect.left) * scaleX;
+    if (e.clientX !== undefined)
+      return (e.clientX - rect.left) * scaleX;
+    return currentX;
+  }
+
+  // ── Guideline ───────────────────────────────
+  function showGuide(x) {
+    if (!currentBody || !currentFruit) return;
+    const rect   = canvas.getBoundingClientRect();
+    const scaleX = rect.width / canvas.width;
+    guideLine.style.display = 'block';
+    guideLine.style.left    = (clampX(x) * scaleX) + 'px';
+    guideLine.style.height  = rect.height + 'px';
+  }
+  function hideGuide() { guideLine.style.display = 'none'; }
+
+  // ── Handlers ────────────────────────────────
+  function onStart(e) {
+    if (disableAction || !currentBody || !currentBody.isSleeping) return;
+    e.preventDefault(); isPressed = true;
+    currentX = getEventX(e);
+    if (isTouchDevice) showGuide(currentX);
+    moveBody(currentX);
+  }
+  function onMove(e) {
+    if (disableAction) return;
+    e.preventDefault();
+    currentX = getEventX(e);
+    if (!isTouchDevice) { moveBody(currentX); }
+    else if (isPressed)  { moveBody(currentX); showGuide(currentX); }
+  }
+  function onEnd(e) {
+    if (!isPressed) return;
+    e.preventDefault(); isPressed = false; hideGuide();
+    if (!disableAction && currentBody && currentBody.isSleeping) {
+      Matter.Sleeping.set(currentBody, false);
+      currentBody.isSleeping = false;
+      currentBody = null;
+      disableAction = true;
+      setTimeout(() => {
+        if (isOver()) return;
+        addFruit(); disableAction = false;
+      }, 700);
+    }
+  }
+  function moveBody(x) {
+    if (currentBody && currentBody.isSleeping)
+      Matter.Body.setPosition(currentBody, { x: clampX(x), y: 50 });
+  }
+
+  // ── Dessin d'un fruit ────────────────────────
+  // angle (radians) : rotation du body Matter.js — appliquée à l'image pour qu'elle tourne avec le fruit.
+  // Sans image → placeholder cercle coloré (la rotation n'a pas d'effet visuel sur un cercle uni, c'est normal).
+  function drawFruitOnCanvas(ctx, fruitIdx, cx, cy, r, angle) {
+    const img = loadedImages[fruitIdx];
+    const f   = FRUITS[fruitIdx] || {};
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.save();
+      // Clip circulaire
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2*Math.PI);
+      ctx.clip();
+      // Rotation autour du centre du fruit
+      ctx.translate(cx, cy);
+      ctx.rotate(angle || 0);
+      ctx.drawImage(img, -r, -r, r*2, r*2);
+      ctx.restore();
+      // Contour par-dessus (hors clip)
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2*Math.PI);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else {
+      // Placeholder : cercle coloré uni (la rotation n'est pas visible sur un disque plein — normal)
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2*Math.PI);
+      ctx.fillStyle = f.color || '#888';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  }
+
+  // ── Fruits ──────────────────────────────────
+  function prepareNext() {
+    nextFruit = FRUITS[Math.floor(Math.random() * Math.min(4, FRUITS.length))];
+    drawNext();
+  }
+  function drawNext() {
+    const nc  = document.getElementById('nextFruitCanvas');
+    const ctx = nc.getContext('2d');
+    ctx.clearRect(0, 0, nc.width, nc.height);
+    const idx = FRUITS.indexOf(nextFruit);
+    const r   = Math.min(nextFruit.radius * 0.8, nc.width * 0.4);
+    drawFruitOnCanvas(ctx, idx, nc.width/2, nc.height/2, r);
+  }
+  function addFruit() {
+    if (!nextFruit) prepareNext();
+    currentFruit = nextFruit;
+    const idx = FRUITS.indexOf(currentFruit);
+    currentBody = Matter.Bodies.circle(GAME_W / 2, 50, currentFruit.radius, {
+      label: 'fruit',
+      isSleeping: true,
+      restitution: 0.3 / SCALE, friction: 0.1 * SCALE,
+      density: currentFruit.density,
+      render: { fillStyle: 'transparent' }, // rendu géré par afterRender
+      fruitIdx: idx,
+    });
+    Matter.Composite.add(world, currentBody);
+    prepareNext();
+  }
+
+  // ── Score ────────────────────────────────────
+  function addScore(pts) {
+    score += pts;
+    document.getElementById('score').textContent = score;
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('masque_suika_hs', highScore);
+    }
+  }
+
+  // ── Game over ────────────────────────────────
+  function isOver() { return gameOverScreen.style.display === 'flex'; }
+  function endGame() {
+    if (isOver() || gameWon) return;
+    Matter.Runner.stop(runner); disableAction = true;
+    document.getElementById('finalScore').textContent = score;
+    gameOverScreen.style.display = 'flex';
+  }
+
+  document.getElementById('restartButton').addEventListener('click', () => {
+    gameOverScreen.style.display = 'none';
+    wmAppeared = false; gameWon = false;
+    // Réinitialiser les lettres révélées
+    revealedLetters.forEach((_, i) => { revealedLetters[i] = i === 0; });
+    rebuildWalls();
+    score = 0; disableAction = false; currentBody = null;
+    document.getElementById('score').textContent = '0';
+    Matter.Runner.run(runner, engine);
+    prepareNext(); addFruit();
+    buildEvo();
+    updateWordDisplay();
+  });
+
+  function rebuildWalls() {
+    Matter.Composite.clear(world, false);
+    Matter.Engine.clear(engine);
+    const wt = Math.max(20, 10*SCALE);
+    Matter.Composite.add(world, [
+      Matter.Bodies.rectangle(GAME_W/2, GAME_H - wt/2, GAME_W, wt, { isStatic:true, label:'wall', render:{fillStyle:MUR_COL} }),
+      Matter.Bodies.rectangle(wt/2, GAME_H/2, wt, GAME_H,         { isStatic:true, label:'wall', render:{fillStyle:MUR_COL} }),
+      Matter.Bodies.rectangle(GAME_W-wt/2, GAME_H/2, wt, GAME_H,  { isStatic:true, label:'wall', render:{fillStyle:MUR_COL} }),
+    ]);
+  }
+
+  // ── VICTOIRE ─────────────────────────────────
+  function triggerWin() {
+    if (gameWon) return;
+    gameWon = true;
+    Matter.Runner.stop(runner); disableAction = true;
+    markLayerDone('red');   // ← state.js
+    spawnParticles();
+    setTimeout(() => winScreen.classList.add('show'), 400);
+  }
+
+  // ── Particules ───────────────────────────────
+  function spawnParticles() {
+    const c = document.getElementById('particles');
+    c.innerHTML = '';
+    const cols = ['#c9a84c','#e8d49a','#27ae60','#e05252','#9c88ff','#e88c2a'];
+    for (let i = 0; i < 48; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const sz = 4 + Math.random() * 6;
+      Object.assign(p.style, {
+        left:              Math.random()*100 + '%',
+        background:        cols[Math.floor(Math.random()*cols.length)],
+        width:             sz + 'px',
+        height:            sz + 'px',
+        borderRadius:      Math.random() > 0.5 ? '50%' : '2px',
+        animationDuration: (1.4 + Math.random()*2) + 's',
+        animationDelay:    (Math.random()*0.9) + 's',
+      });
+      c.appendChild(p);
+    }
+  }
+
+  // ── Barre d'évolution (lettres progressives) ─
+  function buildEvo() {
+    const grid = document.getElementById('evolutionGrid');
+    grid.innerHTML = '';
+    const wordLetters = SECRET_WORD.split('');
+
+    wordLetters.forEach((letter, i) => {
+      const isWM = i === WM_IDX;
+      const CELL = 34; // taille unique pour tous les cercles
+
+      const wrap = document.createElement('div');
+      wrap.className = 'evo-fruit' + (isWM ? ' wm' : '');
+      wrap.id = `evo-slot-${i}`;
+
+      const fc = document.createElement('canvas');
+      fc.width = fc.height = CELL;
+      fc.className = 'evo-canvas';
+
+      const name = document.createElement('div');
+      name.className = 'evo-name';
+      name.id = `evo-name-${i}`;
+      name.textContent = FRUITS[i] ? FRUITS[i].name : '';
+
+      wrap.appendChild(fc);
+      wrap.appendChild(name);
+      grid.appendChild(wrap);
+
+      // flèche entre les lettres
+      if (i < wordLetters.length - 1) {
+        const arr = document.createElement('div');
+        arr.className = 'evo-arr';
+        arr.textContent = '›';
+        grid.appendChild(arr);
+      }
+
+      // Dessin initial
+      drawEvoSlot(i);
+    });
+
+    // Scroll animé
+    setTimeout(() => {
+      const bar = document.getElementById('evo-bar');
+      bar.scrollLeft = bar.scrollWidth;
+      setTimeout(() => { bar.scrollLeft = 0; }, 600);
+    }, 500);
+  }
+
+  function drawEvoSlot(i) {
+    const wrap = document.getElementById(`evo-slot-${i}`);
+    if (!wrap) return;
+    const fc  = wrap.querySelector('canvas');
+    const ctx = fc.getContext('2d');
+    const cx  = fc.width / 2, cy = fc.height / 2;
+    const r   = fc.width * 0.42;
+    const revealed = revealedLetters[i];
+    const f        = FRUITS[i];
+
+    ctx.clearRect(0, 0, fc.width, fc.height);
+
+    const img = loadedImages[i];
+    if (revealed && img && img.complete && img.naturalWidth > 0) {
+      // Miniature du PNG clippée
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2*Math.PI);
+      ctx.clip();
+      ctx.drawImage(img, cx - r, cy - r, r*2, r*2);
+      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2*Math.PI);
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else if (revealed) {
+      // Placeholder coloré uni (pas de lettre)
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2*Math.PI);
+      ctx.fillStyle = f ? f.color : '#888';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else {
+      // Non révélé : cercle grisé
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2*Math.PI);
+      ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Nom du fruit visible si révélé
+    const nameEl = document.getElementById(`evo-name-${i}`);
+    if (nameEl) nameEl.style.visibility = revealed ? 'visible' : 'hidden';
+  }
+
+  function updateEvoBar() {
+    FRUITS.forEach((_, i) => drawEvoSlot(i));
+    // Mise à jour du mot affiché dans la modale
+    updateWordDisplay();
+  }
+
+  // ── Nettoyage caméra (aucune ici, mais cohérence) ──
+  window.cleanupGame = function() {
+    if (runner) Matter.Runner.stop(runner);
+  };
+
+  // ── Affichage du mot en cours ─────────────────
+  function updateWordDisplay() {
+    const container = document.getElementById('word-display');
+    if (!container) return;
+    container.innerHTML = '';
+    SECRET_WORD.split('').forEach((letter, i) => {
+      const span = document.createElement('span');
+      span.className = 'word-char ' + (revealedLetters[i] ? 'revealed' : 'hidden');
+      span.textContent = revealedLetters[i] ? letter : '_';
+      container.appendChild(span);
+    });
+  }
+
+  // ── Modale saisie directe ────────────────────
+  function openWordModal() {
+    const modal = document.getElementById('word-modal');
+    const input = document.getElementById('word-input');
+    const fb    = document.getElementById('word-feedback');
+    modal.classList.remove('word-modal-hidden');
+    fb.textContent = '';
+    fb.className   = '';
+    input.value    = '';
+    setTimeout(() => input.focus(), 100);
+  }
+
+  function closeWordModal() {
+    document.getElementById('word-modal').classList.add('word-modal-hidden');
+  }
+
+  function submitWord() {
+    const input   = document.getElementById('word-input');
+    const fb      = document.getElementById('word-feedback');
+    const attempt = input.value.trim().toUpperCase();
+    if (!attempt) return;
+
+    if (attempt === SECRET_WORD.toUpperCase()) {
+      // Révéler toutes les lettres
+      revealedLetters.forEach((_, i) => { revealedLetters[i] = true; });
+      updateEvoBar();
+      fb.textContent = '✓ Mot correct !';
+      fb.className   = 'ok';
+      setTimeout(() => {
+        closeWordModal();
+        triggerWin();
+      }, 800);
+    } else {
+      fb.textContent = '✗ Ce n\'est pas le bon mot…';
+      fb.className   = 'err';
+      input.select();
+    }
+  }
+
+  document.getElementById('btn-type-word').addEventListener('click', openWordModal);
+  document.getElementById('btn-word-cancel').addEventListener('click', closeWordModal);
+  document.getElementById('btn-word-submit').addEventListener('click', submitWord);
+  document.getElementById('word-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitWord();
+    if (e.key === 'Escape') closeWordModal();
+  });
+  // Fermer en cliquant l'overlay
+  document.getElementById('word-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('word-modal')) closeWordModal();
+  });
+
+  // ── INIT ─────────────────────────────────────
+  function initGame() {
+    isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    preloadImages();
+    measureGame();
+
+    canvas.width  = GAME_W;
+    canvas.height = GAME_H;
+
+    engine = Matter.Engine.create();
+    world  = engine.world;
+    engine.world.gravity.y = 0.8 * SCALE;
+
+    render = Matter.Render.create({
+      canvas, engine,
+      options: { width: GAME_W, height: GAME_H, wireframes: false, background: 'transparent' },
+    });
+
+    rebuildWalls();
+
+    runner = Matter.Runner.create();
+    Matter.Runner.run(runner, engine);
+    Matter.Render.run(render);
+
+    // Dessin custom des fruits par-dessus Matter.js
+    Matter.Events.on(render, 'afterRender', () => {
+      const ctx = render.context;
+      Matter.Composite.allBodies(world)
+        .filter(b => b.label === 'fruit')
+        .forEach(b => {
+          const idx = b.fruitIdx !== undefined
+            ? b.fruitIdx
+            : FRUITS.findIndex(f => f.radius === b.circleRadius);
+          drawFruitOnCanvas(ctx, idx, b.position.x, b.position.y, b.circleRadius, b.angle);
+        });
+    });
+
+    // Events touch/mouse
+    canvas.addEventListener('touchstart',  onStart, { passive: false });
+    canvas.addEventListener('touchmove',   onMove,  { passive: false });
+    canvas.addEventListener('touchend',    onEnd,   { passive: false });
+    canvas.addEventListener('touchcancel', onEnd,   { passive: false });
+    canvas.addEventListener('mousedown',   onStart);
+    canvas.addEventListener('mousemove',   onMove);
+    canvas.addEventListener('mouseup',     onEnd);
+    canvas.addEventListener('mouseleave',  onEnd);
+
+    // Collisions & fusions
+    Matter.Events.on(engine, 'collisionStart', evt => {
+      evt.pairs.forEach(({ bodyA, bodyB }) => {
+        if (bodyA.label !== 'fruit' || bodyB.label !== 'fruit') return;
+        if (bodyA.circleRadius !== bodyB.circleRadius) return;
+        const idx = FRUITS.findIndex(f => f.radius === bodyA.circleRadius);
+        if (idx < 0 || idx >= FRUITS.length - 1) return;
+
+        setTimeout(() => {
+          if (!Matter.Composite.get(world, bodyA.id, 'body')) return;
+          if (!Matter.Composite.get(world, bodyB.id, 'body')) return;
+
+          const nextIdx = idx + 1;
+          const next = FRUITS[nextIdx];
+          const pos  = {
+            x: (bodyA.position.x + bodyB.position.x) / 2,
+            y: (bodyA.position.y + bodyB.position.y) / 2,
+          };
+          Matter.Composite.remove(world, [bodyA, bodyB]);
+
+          const nb = Matter.Bodies.circle(pos.x, pos.y, next.radius, {
+            label: 'fruit',
+            restitution: 0.3 / SCALE,
+            friction:    0.1 * SCALE,
+            density: next.density,
+            render: { fillStyle: 'transparent' },
+            fruitIdx: nextIdx,
+          });
+          Matter.Composite.add(world, nb);
+          addScore(next.score);
+
+          // Révéler la lettre suivante dans la barre
+          if (!revealedLetters[nextIdx]) {
+            revealedLetters[nextIdx] = true;
+            updateEvoBar();
+          }
+
+          // 🍉 Pastèque créée !
+          if (nextIdx === WM_IDX && !wmAppeared) {
+            wmAppeared = true;
+            setTimeout(triggerWin, 600);
+          }
+        }, 0);
+      });
+    });
+
+    // Détection game over
+    let goTimeout = null;
+    Matter.Events.on(engine, 'afterUpdate', () => {
+      if (gameWon) return;
+      const fruits = Matter.Composite.allBodies(world).filter(b => b.label === 'fruit');
+      const above  = fruits.some(f => !f.isSleeping && f.position.y < TOP_LINE);
+      if (above) {
+        if (!goTimeout) goTimeout = setTimeout(endGame, 1500);
+      } else if (goTimeout) {
+        clearTimeout(goTimeout); goTimeout = null;
+      }
+    });
+
+    prepareNext();
+    addFruit();
+    buildEvo();
+    updateWordDisplay();
+  }
+
+  window.addEventListener('load', initGame);
+  window.addEventListener('beforeunload', () => {
+    if (runner) Matter.Runner.stop(runner);
+  });
+  </script>
+
+</body>
+</html>

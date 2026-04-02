@@ -1,0 +1,268 @@
+/* ═══════════════════════════════════════════════════════════════
+   HUB.CSS — Hub central face tracking + sélection mini-jeux
+   Dépend de base.css
+═══════════════════════════════════════════════════════════════ */
+
+/* ── HEADER ─────────────────────────────────────────────────── */
+#header {
+  padding: 20px 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: all;
+}
+
+.header-title {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--or);
+  opacity: 0.9;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+}
+
+#btn-reset {
+  background: none;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: rgba(201, 168, 76, 0.5);
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#btn-reset:active {
+  color: var(--or);
+  border-color: var(--or);
+}
+
+/* ── LOADER ─────────────────────────────────────────────────── */
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--noir);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  transition: opacity 0.8s ease;
+}
+
+#loader.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── PANNEAU DES MINI-JEUX ──────────────────────────────────── */
+#games-panel {
+  padding: 0 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: all;
+  /* Entrée animée */
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease 0.3s, transform 0.6s ease 0.3s;
+}
+
+#games-panel.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.panel-rule {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201, 168, 76, 0.4), transparent);
+  margin-bottom: 4px;
+}
+
+.panel-label {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 76, 0.6);
+  text-align: center;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+
+/* ── GRILLE 3 BOUTONS ───────────────────────────────────────── */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+/* ── BOUTON MINI-JEU ────────────────────────────────────────── */
+.game-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 8, 4, 0.65);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, border-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game-btn:active {
+  transform: scale(0.96);
+}
+
+/* Pastille colorée */
+.game-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.game-dot::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dot-red   { background: radial-gradient(circle at 35% 35%, #e63232, #8b1a1a); }
+.dot-blue  { background: radial-gradient(circle at 35% 35%, #3a7fd4, #1a3a5c); }
+.dot-green { background: radial-gradient(circle at 35% 35%, #3ab06a, #1a4a2e); }
+
+.game-name {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--creme);
+  opacity: 0.85;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.game-hint {
+  font-size: 10px;
+  color: rgba(245, 240, 232, 0.45);
+  text-align: center;
+  line-height: 1.3;
+  font-style: italic;
+}
+
+/* État complété */
+.game-btn.done {
+  border-color: rgba(201, 168, 76, 0.35);
+}
+
+.game-btn.done .game-dot::before {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #fff;
+  font-family: sans-serif;
+  line-height: 28px;
+  text-align: center;
+}
+
+.game-btn.done .game-name,
+.game-btn.done .game-hint {
+  opacity: 0.45;
+}
+
+/* Badge "Fait" */
+.done-badge {
+  display: none;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--or);
+  color: var(--noir);
+  font-family: 'Cinzel', serif;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 5px;
+  border-radius: 2px;
+}
+
+.game-btn.done .done-badge {
+  display: block;
+}
+
+/* ── BOUTON RÉVÉLATION (apparu quand 3 jeux complétés) ───────── */
+#btn-reveal {
+  display: none;
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #c9a84c, #e8d49a, #c9a84c);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+  color: var(--noir);
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#btn-reveal.visible {
+  display: block;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── TOAST SUCCÈS (confirmation couche effacée) ──────────────── */
+#toast {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  z-index: 50;
+  background: rgba(10, 8, 4, 0.9);
+  border: 1px solid var(--or);
+  color: var(--or-pale);
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  white-space: nowrap;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

@@ -1,0 +1,238 @@
+/* ═══════════════════════════════════════════════════════════════
+   JEU-VERT.CSS — Couche Verte : AR Image Tracking
+   Caméra arrière + MindAR targets → lettres à collectionner
+   Dépend de base.css
+═══════════════════════════════════════════════════════════════ */
+
+/* ── COULEUR D'ACCENT ───────────────────────────────────────── */
+.feedback.is-success { color: var(--vert-vif); }
+
+.header-pill {
+  color: rgba(39, 174, 96, 0.85);
+  border: 1px solid rgba(39, 174, 96, 0.25);
+}
+
+/* ── HEADER ─────────────────────────────────────────────────── */
+#header {
+  padding: 14px 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: all;
+}
+
+/* ── MOT À TROUS (lettres collectées) ───────────────────────── */
+#word-display-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.word-label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 76, 0.5);
+  background: rgba(10, 8, 4, 0.55);
+  backdrop-filter: blur(6px);
+  padding: 4px 10px;
+  border-radius: 2px;
+}
+
+#word-display {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(22px, 7vw, 32px);
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  color: var(--or-pale);
+  background: rgba(10, 8, 4, 0.65);
+  backdrop-filter: blur(8px);
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  min-width: 200px;
+  text-align: center;
+}
+
+#letter-count {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(39, 174, 96, 0.7);
+  background: rgba(10, 8, 4, 0.55);
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+
+/* ── PANNEAU BAS ─────────────────────────────────────────────── */
+#bottom-panel {
+  padding: 0 14px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: all;
+}
+
+/* Carte d'instruction */
+.instr-card {
+  background: rgba(10, 8, 4, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(201, 168, 76, 0.18);
+  border-radius: 4px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.instr-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.instr-text {
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: rgba(245, 240, 232, 0.8);
+  font-style: italic;
+}
+
+.instr-text strong {
+  color: var(--or-pale);
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* ── FORMULAIRE DE VALIDATION (affiché quand mot complet) ────── */
+#validation-wrap {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#validation-wrap.show { display: flex; }
+
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+#word-input {
+  flex: 1;
+  padding: 14px;
+  background: rgba(10, 8, 4, 0.82);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 2px;
+  color: var(--creme);
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  outline: none;
+  -webkit-appearance: none;
+  transition: border-color 0.2s;
+}
+
+#word-input::placeholder {
+  color: rgba(245, 240, 232, 0.2);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+#word-input:focus { border-color: rgba(201, 168, 76, 0.6); }
+
+#word-input.error {
+  border-color: var(--erreur) !important;
+  animation: shake 0.35s ease;
+}
+
+#btn-validate {
+  padding: 14px 18px;
+  background: var(--vert);
+  border: 1px solid rgba(39, 174, 96, 0.4);
+  border-radius: 2px;
+  color: var(--creme);
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#btn-validate:active { background: var(--vert-vif); }
+
+#feedback {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-align: center;
+  min-height: 16px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+#feedback.show       { opacity: 1; }
+#feedback.is-error   { color: var(--erreur); }
+#feedback.is-success { color: var(--vert-vif); }
+
+/* ── TOAST "LETTRE TROUVÉE" ─────────────────────────────────── */
+/* Étend .toast-center de base.css */
+#letter-toast {
+  border: 1px solid var(--vert-vif);
+}
+
+.toast-letter {
+  font-family: 'Cinzel', serif;
+  font-size: 52px;
+  font-weight: 700;
+  color: var(--vert-vif);
+  line-height: 1;
+}
+
+.toast-label {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 76, 0.7);
+}
+
+/* ── VICTOIRE ───────────────────────────────────────────────── */
+/* Structure : .win-screen de base.css */
+.win-word {
+  font-family: 'Cinzel', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--vert-vif);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  animation: fadeUp 0.5s ease 0.45s both;
+}
+
+/* ── LOADER MINDAR ──────────────────────────────────────────── */
+#ar-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  background: var(--noir);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  transition: opacity 0.6s ease;
+}
+
+#ar-loader.hide {
+  opacity: 0;
+  pointer-events: none;
+}

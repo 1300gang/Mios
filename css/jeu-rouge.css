@@ -1,0 +1,386 @@
+/* ═══════════════════════════════════════════════════════════════
+   JEU-ROUGE.CSS — Couche Rouge : Suika Game (fusion de fruits)
+   Dépend de base.css
+═══════════════════════════════════════════════════════════════ */
+
+/* Corps centré en colonne pour ce jeu */
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── HEADER ─────────────────────────────────────────────────── */
+#header {
+  width: 100%;
+  max-width: 420px;
+  padding: 14px 16px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+/* #btn-back → base.css */
+
+.header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.score-label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 76, 0.5);
+}
+
+#score {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--or-pale);
+  line-height: 1;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.next-label {
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 76, 0.45);
+}
+
+#nextFruitCanvas { width: 40px; height: 40px; }
+
+/* ── ZONE DE JEU ────────────────────────────────────────────── */
+#game-wrap {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* Ligne de danger */
+#danger-line {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--rouge-vif) 0px, var(--rouge-vif) 8px,
+    transparent 8px, transparent 16px
+  );
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Guideline verticale de visée */
+#guideLine {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(201, 168, 76, 0.45) 0px, rgba(201, 168, 76, 0.45) 4px,
+    transparent 4px, transparent 8px
+  );
+  pointer-events: none;
+  display: none;
+}
+
+/* ── GAME OVER ───────────────────────────────────────────────── */
+#gameOverScreen {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 8, 4, 0.88);
+  backdrop-filter: blur(6px);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  z-index: 20;
+}
+
+#gameOverScreen.show { display: flex; }
+
+.over-title {
+  font-family: 'Cinzel', serif;
+  font-size: 30px;
+  font-weight: 400;
+  color: var(--rouge-vif);
+  letter-spacing: 0.08em;
+}
+
+.over-score-wrap {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(232, 212, 154, 0.7);
+  text-align: center;
+}
+
+.over-score-wrap span {
+  display: block;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--or-pale);
+  margin-top: 4px;
+}
+
+#restartButton {
+  padding: 14px 36px;
+  background: var(--rouge);
+  border: none;
+  border-radius: 2px;
+  color: var(--creme);
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 6px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── ÉCRAN VICTOIRE (pastèque trouvée) ──────────────────────── */
+/* Structure .win-screen + .win-icon + .win-title → base.css    */
+
+#winScreen {
+  /* Extension rouge de .win-screen */
+}
+
+#winScreen .win-title {
+  animation: fadeUp 0.5s ease 0.35s both;
+}
+
+#winScreen .win-sub {
+  animation: fadeUp 0.5s ease 0.5s both;
+}
+
+/* #btn-hub → base.css */
+#winScreen #btn-hub {
+  animation: fadeUp 0.5s ease 0.7s both;
+}
+
+/* ── MOT EN COURS ───────────────────────────────────────────── */
+#word-bar {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 16px 10px;
+  flex-shrink: 0;
+}
+
+#word-display {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.word-char {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  width: 22px;
+  text-align: center;
+  line-height: 1;
+  transition: all 0.3s ease;
+}
+
+.word-char.revealed {
+  color: var(--or-pale);
+  text-shadow: 0 0 8px rgba(201, 168, 76, 0.5);
+}
+
+.word-char.hidden {
+  color: rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+#btn-type-word {
+  background: none;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: rgba(201, 168, 76, 0.6);
+  font-size: 14px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s;
+}
+
+#btn-type-word:active { color: var(--or); border-color: var(--or); }
+
+/* ── MODALE SAISIE DU MOT ───────────────────────────────────── */
+#word-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 8, 4, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.word-modal-hidden { display: none !important; }
+
+#word-modal-box {
+  background: #1a0d05;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 4px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: fadeUp 0.25s ease both;
+}
+
+.wm-title {
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--or-pale);
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.wm-sub {
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(245, 240, 232, 0.5);
+  text-align: center;
+  line-height: 1.6;
+}
+
+#word-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  border-radius: 2px;
+  padding: 12px 14px;
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--or-pale);
+  text-align: center;
+  outline: none;
+}
+
+#word-input:focus { border-color: rgba(201, 168, 76, 0.6); }
+
+#word-feedback {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-align: center;
+  min-height: 16px;
+  transition: color 0.2s;
+}
+
+#word-feedback.ok  { color: var(--succes); }
+#word-feedback.err { color: var(--rouge-vif); }
+
+.wm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.wm-actions button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 2px;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#btn-word-cancel { background: rgba(255, 255, 255, 0.07); color: rgba(245, 240, 232, 0.5); }
+#btn-word-submit { background: var(--or); color: var(--noir); }
+
+/* ── BARRE D'ÉVOLUTION ──────────────────────────────────────── */
+#evo-bar {
+  width: 100%;
+  max-width: 420px;
+  padding: 5px 10px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+
+#evo-bar::-webkit-scrollbar { display: none; }
+
+#evolutionGrid {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+}
+
+.evo-fruit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.evo-fruit canvas { width: 34px; height: 34px; }
+
+.evo-name {
+  visibility: hidden;
+  font-family: 'Cinzel', serif;
+  font-size: 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 240, 232, 0.35);
+  text-align: center;
+}
+
+/* Fruit actif (watermelon) */
+.evo-fruit.wm canvas { width: 34px; height: 34px; }
+.evo-fruit.wm .evo-name { color: var(--or); }
+
+.evo-arr {
+  font-size: 9px;
+  color: rgba(201, 168, 76, 0.25);
+  align-self: center;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
