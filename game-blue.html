@@ -104,6 +104,13 @@
       border: 1px solid rgba(127,179,211,0.25);
     }
 
+    /* ── SECTION HAUTE (header + progression groupés) ───────── */
+    #top-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
     /* ── INDICATEUR PROGRESSION ──────────────── */
     #progress-bar-wrap {
       display: flex;
@@ -444,16 +451,18 @@
   <!-- ── UI ── -->
   <div id="ui-layer">
 
-    <div id="header">
-      <a href="hub.html" id="btn-back" onclick="stopCamera()">← Hub</a>
-      <span class="header-pill">Couche Bleue</span>
-    </div>
+    <div id="top-section">
+      <div id="header">
+        <a href="hub.html" id="btn-back" onclick="stopCamera()">← Hub</a>
+        <span class="header-pill">Couche Bleue</span>
+      </div>
 
-    <!-- Progression -->
-    <div id="progress-bar-wrap">
-      <span class="progress-label">Mots déchiffrés</span>
-      <div id="progress-dots">
-        <!-- 5 points générés par JS -->
+      <!-- Progression (juste sous le header, ne bloque plus la caméra) -->
+      <div id="progress-bar-wrap">
+        <span class="progress-label">Mots déchiffrés</span>
+        <div id="progress-dots">
+          <!-- 5 points générés par JS -->
+        </div>
       </div>
     </div>
 

@@ -981,8 +981,13 @@
   // ── Modale saisie directe ────────────────────
   function openWordModal() {
     const modal = document.getElementById('word-modal');
+    const box   = document.getElementById('word-modal-box');
     const input = document.getElementById('word-input');
     const fb    = document.getElementById('word-feedback');
+    // Forcer le rejeu de l'animation fadeUp à chaque ouverture
+    box.style.animation = 'none';
+    void box.offsetHeight;
+    box.style.animation = '';
     modal.classList.remove('word-modal-hidden');
     fb.textContent = '';
     fb.className   = '';
